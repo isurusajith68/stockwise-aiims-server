@@ -28,4 +28,8 @@ db.loginHistory = require("./loginHistory.model.js")(sequelize, Sequelize);
 db.user.hasMany(db.loginHistory, { foreignKey: "userId" });
 db.loginHistory.belongsTo(db.user, { foreignKey: "userId" });
 
+db.tokenBlacklist = require("./TokenBlacklist.js")(sequelize, Sequelize);
+db.user.hasMany(db.tokenBlacklist, { foreignKey: "userId" });
+db.tokenBlacklist.belongsTo(db.user, { foreignKey: "userId" });
+
 module.exports = db;

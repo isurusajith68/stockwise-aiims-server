@@ -3,11 +3,11 @@ const QRCode = require("qrcode");
 const db = require("../models");
 const User = db.user;
 const TwoFactorAuth = db.twoFactorAuth;
-
+const bcrypt = require("bcryptjs");
 exports.setup2FA = async (req, res, next) => {
   try {
     const userId = req.userId;
-
+    console.log("User ID:", userId);
     const user = await User.findByPk(userId);
 
     if (!user) {
@@ -134,6 +134,30 @@ exports.disable2FA = async (req, res, next) => {
     return res.json({
       status: "success",
       message: "Two-factor authentication disabled successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.get2FAStatus = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+
+    const twoFactorAuth = await TwoFactorAuth.findOne({
+      where: { userId },
+    });
+
+    if (!twoFactorAuth) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Two-factor authentication not set up",
+      });
+    }
+
+    return res.json({
+      status: "success",
+      isEnabled: twoFactorAuth.isEnabled,
     });
   } catch (error) {
     next(error);

@@ -4,6 +4,7 @@ const db = require("../models");
 const User = db.user;
 const LoginHistory = db.loginHistory;
 const TwoFactorAuth = db.twoFactorAuth;
+const TokenBlacklist = db.tokenBlacklist;
 const speakeasy = require("speakeasy");
 const { Op } = require("sequelize");
 const sequelize = db.sequelize;
@@ -17,19 +18,21 @@ exports.login = async (req, res, next) => {
         [Op.or]: [{ username: identifier }, { email: identifier }], // Match either username or email
       },
     });
-    console.log("User found:", user);
+    console.log("User found:", user ? user.id : "not found");
 
     const loginAttempt = {
-      userId: user ? user.id : undefined, // Ensure userId is only set if user exists
-      ipAddress: req.ipAddress,
-      deviceInfo: req.deviceInfo,
-      location: req.location,
+      userId: user ? user.id : null,
+      ipAddress: req.ipAddress || req.ip || req.headers["x-forwarded-for"],
+      deviceInfo:
+        req.deviceInfo || req.headers["user-agent"] || "Unknown device",
+      location: req.location || "Unknown location",
       status: "failed",
+      loginTime: new Date(),
     };
 
     if (!user) {
       loginAttempt.failureReason = "User not found";
-      // await LoginHistory.create(loginAttempt);
+      await LoginHistory.create(loginAttempt);
 
       return res.status(404).json({
         status: "fail",
@@ -68,7 +71,7 @@ exports.login = async (req, res, next) => {
         loginAttempt.failureReason = "2FA token required";
         await LoginHistory.create(loginAttempt);
 
-        return res.status(401).json({
+        return res.status(200).json({
           status: "fail",
           message: "2FA verification required",
           require2FA: true,
@@ -81,7 +84,10 @@ exports.login = async (req, res, next) => {
         token,
       });
 
-      const isBackupCode = twoFactorAuth.backupCodes.includes(token);
+      const isBackupCode =
+        twoFactorAuth.backupCodes &&
+        Array.isArray(twoFactorAuth.backupCodes) &&
+        twoFactorAuth.backupCodes.includes(token);
 
       if (!verified && !isBackupCode) {
         loginAttempt.failureReason = "Invalid 2FA token";
@@ -101,16 +107,16 @@ exports.login = async (req, res, next) => {
       }
     }
 
-    const tokens = jwt.sign(
+    const accessToken = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
     user.lastLogin = new Date();
-    user.loginDevice = req.deviceInfo;
-    user.loginLocation = req.location;
-    user.loginIp = req.ipAddress;
+    user.loginDevice = loginAttempt.deviceInfo;
+    user.loginLocation = loginAttempt.location;
+    user.loginIp = loginAttempt.ipAddress;
     await user.save();
 
     loginAttempt.status = "success";
@@ -126,9 +132,10 @@ exports.login = async (req, res, next) => {
         email: user.email,
         role: user.role,
       },
-      tokens,
+      accessToken,
     });
   } catch (error) {
+    console.error("Login error:", error);
     next(error);
   }
 };
@@ -173,7 +180,7 @@ exports.register = async (req, res, next) => {
     }
 
     const userIp =
-      req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+      req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
     const userDevice = req.headers["user-agent"] || "Unknown device";
     const userLocation = req.location || "Unknown location";
 
@@ -221,7 +228,7 @@ exports.register = async (req, res, next) => {
         email: user.email,
         role: user.role,
       },
-      token,
+      accessToken: token,
     });
   } catch (error) {
     await t.rollback();
@@ -253,24 +260,33 @@ exports.refreshToken = async (req, res, next) => {
     const userId = req.userId;
     const userRole = req.userRole;
 
+    // Generate new token
     const newToken = jwt.sign(
       { id: userId, role: userRole },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
-    // But generally for refresh, we don't invalidate the old one immediately
-    // if (req.token) {
-    //   const decoded = jwt.decode(req.token);
-    //   if (decoded && decoded.exp) {
-    //     const expiresAt = new Date(decoded.exp * 1000);
-    //     await db.tokenBlacklist.create({
-    //       token: req.token,
-    //       expiresAt: expiresAt,
-    //       userId: userId,
-    //     });
-    //   }
-    // }
+    // Add the old token to blacklist with proper expiration
+    if (req.token) {
+      const decoded = jwt.decode(req.token);
+      if (decoded && decoded.exp) {
+        const expiresAt = new Date(decoded.exp * 1000);
+
+        // Check if token already in blacklist to avoid unique constraint errors
+        const existingToken = await TokenBlacklist.findOne({
+          where: { token: req.token },
+        });
+
+        if (!existingToken) {
+          await TokenBlacklist.create({
+            token: req.token,
+            expiresAt: expiresAt,
+            userId: userId,
+          });
+        }
+      }
+    }
 
     return res.status(200).json({
       status: "success",
@@ -285,34 +301,19 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
-async function cleanupExpiredTokens() {
-  try {
-    const TokenBlacklist = db.tokenBlacklist;
-    const now = new Date();
-
-    const deleted = await TokenBlacklist.destroy({
-      where: {
-        expiresAt: {
-          [db.Sequelize.Op.lt]: now,
-        },
-      },
-    });
-
-    console.log(`Cleaned up ${deleted} expired token(s) from blacklist`);
-  } catch (error) {
-    console.error("Error cleaning up expired tokens:", error);
-  }
-}
 exports.logout = async (req, res, next) => {
   try {
-    const token = req.headers["authorization"]?.replace("Bearer ", "");
-
-    if (!token) {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
       return res.status(400).json({
         status: "fail",
         message: "No token provided",
       });
     }
+
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : authHeader;
 
     const decoded = jwt.decode(token);
 
@@ -327,26 +328,19 @@ exports.logout = async (req, res, next) => {
     const now = Math.floor(Date.now() / 1000);
     const ttl = expiresAt - now;
 
-    const TokenBlacklist = db.tokenBlacklist;
-
     if (ttl > 0) {
-      await TokenBlacklist.create({
-        token: token,
-        expiresAt: new Date(expiresAt * 1000),
-        userId: req.userId,
+      const existingToken = await TokenBlacklist.findOne({
+        where: { token },
       });
-    }
 
-    /* 
-    // Option 2: If you want to use Redis instead (commented out)
-    // Make sure to require and configure Redis client at the top of the file
-    // const redis = require('redis');
-    // const redisClient = redis.createClient(process.env.REDIS_URL);
-    
-    if (ttl > 0) {
-      await redisClient.setEx(`blacklist:${token}`, ttl, "1");
+      if (!existingToken) {
+        await TokenBlacklist.create({
+          token: token,
+          expiresAt: new Date(expiresAt * 1000),
+          userId: req.userId,
+        });
+      }
     }
-    */
 
     return res.status(200).json({
       status: "success",
@@ -356,4 +350,26 @@ exports.logout = async (req, res, next) => {
     console.error("Logout error:", error);
     next(error);
   }
+};
+
+exports.setupTokenCleanup = () => {
+  setInterval(async () => {
+    try {
+      const now = new Date();
+
+      const deleted = await TokenBlacklist.destroy({
+        where: {
+          expiresAt: {
+            [Op.lt]: now,
+          },
+        },
+      });
+
+      console.log(`Cleaned up ${deleted} expired token(s) from blacklist`);
+    } catch (error) {
+      console.error("Error cleaning up expired tokens:", error);
+    }
+  }, 12 * 60 * 60 * 1000);
+
+  console.log("Token cleanup scheduler initialized");
 };

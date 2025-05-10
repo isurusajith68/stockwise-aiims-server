@@ -24,6 +24,7 @@ exports.validateLogin = (req, res, next) => {
   const schema = Joi.object({
     identifier: Joi.string().required(),
     password: Joi.string().required(),
+    token : Joi.string(),
   });
 
   const { error } = schema.validate(req.body);

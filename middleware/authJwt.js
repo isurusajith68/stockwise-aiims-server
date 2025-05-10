@@ -5,21 +5,30 @@ const TokenBlacklist = db.tokenBlacklist;
 
 const authJwt = {};
 
+// Helper function to extract token from header
+authJwt.extractToken = (authHeader) => {
+  if (!authHeader) return null;
+
+  if (authHeader.startsWith("Bearer ")) {
+    return authHeader.slice(7);
+  }
+
+  return authHeader;
+};
+
 authJwt.verifyToken = async (req, res, next) => {
   try {
-    let token = req.headers["authorization"];
-
-    if (!token) {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
       return res.status(403).json({
         status: "fail",
         message: "No token provided!",
       });
     }
 
-    if (token.startsWith("Bearer ")) {
-      token = token.slice(7, token.length);
-    }
+    const token = authJwt.extractToken(authHeader);
 
+    // Check if token is blacklisted
     const blacklistedToken = await TokenBlacklist.findOne({
       where: { token },
     });
@@ -31,6 +40,7 @@ authJwt.verifyToken = async (req, res, next) => {
       });
     }
 
+    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.userId = decoded.id;
@@ -93,19 +103,17 @@ authJwt.verifyAdmin = [authJwt.verifyToken, authJwt.isActive, authJwt.isAdmin];
 
 authJwt.refreshToken = async (req, res, next) => {
   try {
-    const token = req.headers["authorization"];
+    const authHeader = req.headers["authorization"];
 
-    if (!token) {
+    if (!authHeader) {
       return next();
     }
 
-    let cleanToken = token;
-    if (cleanToken.startsWith("Bearer ")) {
-      cleanToken = cleanToken.slice(7, cleanToken.length);
-    }
+    const token = authJwt.extractToken(authHeader);
 
+    // Check if token is blacklisted
     const blacklistedToken = await TokenBlacklist.findOne({
-      where: { token: cleanToken },
+      where: { token },
     });
 
     if (blacklistedToken) {
@@ -115,7 +123,7 @@ authJwt.refreshToken = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.decode(cleanToken);
+    const decoded = jwt.decode(token);
 
     if (!decoded) {
       return next();
@@ -123,10 +131,13 @@ authJwt.refreshToken = async (req, res, next) => {
 
     const now = Math.floor(Date.now() / 1000);
 
+    // If token will expire in less than an hour (3600 seconds)
     if (decoded.exp - now < 3600) {
       try {
-        jwt.verify(cleanToken, process.env.JWT_SECRET);
+        // Verify token is still valid
+        jwt.verify(token, process.env.JWT_SECRET);
 
+        // Generate new token
         const newToken = jwt.sign(
           { id: decoded.id, role: decoded.role },
           process.env.JWT_SECRET,
@@ -148,16 +159,15 @@ authJwt.refreshToken = async (req, res, next) => {
 
 authJwt.optionalAuth = async (req, res, next) => {
   try {
-    let token = req.headers["authorization"];
+    const authHeader = req.headers["authorization"];
 
-    if (!token) {
+    if (!authHeader) {
       return next();
     }
 
-    if (token.startsWith("Bearer ")) {
-      token = token.slice(7, token.length);
-    }
+    const token = authJwt.extractToken(authHeader);
 
+    // Check if token is blacklisted
     const blacklistedToken = await TokenBlacklist.findOne({
       where: { token },
     });
@@ -185,6 +195,24 @@ authJwt.optionalAuth = async (req, res, next) => {
   } catch (error) {
     console.error("Optional auth error:", error);
     next();
+  }
+};
+
+authJwt.cleanupExpiredTokens = async () => {
+  try {
+    const now = new Date();
+
+    const deleted = await TokenBlacklist.destroy({
+      where: {
+        expiresAt: {
+          [db.Sequelize.Op.lt]: now,
+        },
+      },
+    });
+
+    console.log(`Cleaned up ${deleted} expired token(s) from blacklist`);
+  } catch (error) {
+    console.error("Error cleaning up expired tokens:", error);
   }
 };
 
