@@ -3,7 +3,7 @@ const { extractUserInfo } = require("../middleware/userInfoMiddleware");
 const controller = require("../controllers/auth.controller");
 const twoFactorController = require("../controllers/twoFactorAuth.controller");
 const authJwt = require("../middleware/authJwt");
-const { validateRegistration } = require("../middleware/validateData");
+const { validateRegistration, validateLogin } = require("../middleware/validateData");
 
 module.exports = (app) => {
   app.use((req, res, next) => {
@@ -26,7 +26,7 @@ module.exports = (app) => {
 
   app.post(
     "/api/auth/login",
-    [loginLimiter, extractUserInfo],
+    [loginLimiter, extractUserInfo, validateLogin],
     controller.login
   );
 

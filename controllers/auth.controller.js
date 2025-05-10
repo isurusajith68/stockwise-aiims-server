@@ -10,17 +10,17 @@ const sequelize = db.sequelize;
 
 exports.login = async (req, res, next) => {
   try {
-    const { username, password, token } = req.body;
+    const { identifier, password, token } = req.body; // Use 'identifier' instead of 'username'
 
     const user = await User.findOne({
       where: {
-        [Op.or]: [{ username }, { email: username }],
+        [Op.or]: [{ username: identifier }, { email: identifier }], // Match either username or email
       },
     });
+    console.log("User found:", user);
 
-    // Record login attempt
     const loginAttempt = {
-      userId: user ? user.id : null,
+      userId: user ? user.id : undefined, // Ensure userId is only set if user exists
       ipAddress: req.ipAddress,
       deviceInfo: req.deviceInfo,
       location: req.location,
@@ -29,7 +29,7 @@ exports.login = async (req, res, next) => {
 
     if (!user) {
       loginAttempt.failureReason = "User not found";
-      await LoginHistory.create(loginAttempt);
+      // await LoginHistory.create(loginAttempt);
 
       return res.status(404).json({
         status: "fail",
@@ -47,7 +47,6 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // Verify password
     const passwordValid = bcrypt.compareSync(password, user.password);
 
     if (!passwordValid) {
@@ -60,13 +59,11 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // Check if 2FA is enabled
     const twoFactorAuth = await TwoFactorAuth.findOne({
       where: { userId: user.id, isEnabled: true },
     });
 
     if (twoFactorAuth) {
-      // If 2FA is enabled, verify token
       if (!token) {
         loginAttempt.failureReason = "2FA token required";
         await LoginHistory.create(loginAttempt);
@@ -78,14 +75,12 @@ exports.login = async (req, res, next) => {
         });
       }
 
-      // Verify 2FA token
       const verified = speakeasy.totp.verify({
         secret: twoFactorAuth.secret,
         encoding: "base32",
         token,
       });
 
-      // Also check if token is a backup code
       const isBackupCode = twoFactorAuth.backupCodes.includes(token);
 
       if (!verified && !isBackupCode) {
@@ -98,7 +93,6 @@ exports.login = async (req, res, next) => {
         });
       }
 
-      // If using a backup code, remove it from available codes
       if (isBackupCode) {
         twoFactorAuth.backupCodes = twoFactorAuth.backupCodes.filter(
           (code) => code !== token
@@ -107,21 +101,18 @@ exports.login = async (req, res, next) => {
       }
     }
 
-    // Generate JWT token
     const tokens = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
-    // Update last login and login metadata
     user.lastLogin = new Date();
     user.loginDevice = req.deviceInfo;
     user.loginLocation = req.location;
     user.loginIp = req.ipAddress;
     await user.save();
 
-    // Record successful login
     loginAttempt.status = "success";
     delete loginAttempt.failureReason;
     await LoginHistory.create(loginAttempt);
@@ -269,17 +260,17 @@ exports.refreshToken = async (req, res, next) => {
     );
 
     // But generally for refresh, we don't invalidate the old one immediately
-    if (req.token) {
-      const decoded = jwt.decode(req.token);
-      if (decoded && decoded.exp) {
-        const expiresAt = new Date(decoded.exp * 1000);
-        await db.tokenBlacklist.create({
-          token: req.token,
-          expiresAt: expiresAt,
-          userId: userId,
-        });
-      }
-    }
+    // if (req.token) {
+    //   const decoded = jwt.decode(req.token);
+    //   if (decoded && decoded.exp) {
+    //     const expiresAt = new Date(decoded.exp * 1000);
+    //     await db.tokenBlacklist.create({
+    //       token: req.token,
+    //       expiresAt: expiresAt,
+    //       userId: userId,
+    //     });
+    //   }
+    // }
 
     return res.status(200).json({
       status: "success",

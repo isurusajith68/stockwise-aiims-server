@@ -22,7 +22,7 @@ exports.validateRegistration = (req, res, next) => {
 
 exports.validateLogin = (req, res, next) => {
   const schema = Joi.object({
-    username: Joi.string().required(),
+    identifier: Joi.string().required(),
     password: Joi.string().required(),
   });
 
