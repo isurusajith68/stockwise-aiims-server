@@ -39,6 +39,17 @@ module.exports = (sequelize, Sequelize) => {
       lastLogin: {
         type: Sequelize.DATE,
       },
+      createdAt: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+      },
+      deletedAt: {
+        type: Sequelize.DATE,
+      },
     },
     {
       timestamps: true,

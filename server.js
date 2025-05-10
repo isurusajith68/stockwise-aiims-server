@@ -26,6 +26,8 @@ const apiLimiter = rateLimit({
     message: "Too many requests, please try again later.",
   },
 });
+
+
 app.use("/api", apiLimiter);
 
 const db = require("./models");
@@ -45,8 +47,8 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
+require("./routes/auth.routes")(app);
+require("./routes/user.routes")(app);
 
 app.use((req, res, next) => {
   res.status(404).json({

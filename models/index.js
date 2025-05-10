@@ -20,4 +20,12 @@ db.sequelize = sequelize;
 
 db.user = require("./user.model")(sequelize, Sequelize);
 
+db.twoFactorAuth = require("./twoFactorAuth.model.js")(sequelize, Sequelize);
+db.user.hasOne(db.twoFactorAuth, { foreignKey: "userId" });
+db.twoFactorAuth.belongsTo(db.user, { foreignKey: "userId" });
+
+db.loginHistory = require("./loginHistory.model.js")(sequelize, Sequelize);
+db.user.hasMany(db.loginHistory, { foreignKey: "userId" });
+db.loginHistory.belongsTo(db.user, { foreignKey: "userId" });
+
 module.exports = db;

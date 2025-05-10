@@ -2,15 +2,12 @@ const db = require("../models");
 const User = db.user;
 const bcrypt = require("bcryptjs");
 
-// Get all users (admin only)
 exports.findAll = async (req, res, next) => {
   try {
-    // Pagination parameters
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 10;
     const offset = page * limit;
 
-    // Get users with pagination
     const users = await User.findAndCountAll({
       attributes: [
         "id",
@@ -41,7 +38,6 @@ exports.findAll = async (req, res, next) => {
   }
 };
 
-// Get user by ID
 exports.findOne = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id, {
@@ -73,7 +69,6 @@ exports.findOne = async (req, res, next) => {
   }
 };
 
-// Get current user profile
 exports.getProfile = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.userId, {
@@ -105,10 +100,8 @@ exports.getProfile = async (req, res, next) => {
   }
 };
 
-// Update user
 exports.update = async (req, res, next) => {
   try {
-    // Check if user exists
     const user = await User.findByPk(req.params.id);
 
     if (!user) {
@@ -118,7 +111,6 @@ exports.update = async (req, res, next) => {
       });
     }
 
-    // Prepare update data
     const updateData = {};
 
     if (req.body.username) updateData.username = req.body.username;
@@ -129,7 +121,6 @@ exports.update = async (req, res, next) => {
     if (req.body.isActive !== undefined)
       updateData.isActive = req.body.isActive;
 
-    // Update user
     await user.update(updateData);
 
     return res.status(200).json({
@@ -148,7 +139,6 @@ exports.update = async (req, res, next) => {
   }
 };
 
-// Delete user
 exports.delete = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id);

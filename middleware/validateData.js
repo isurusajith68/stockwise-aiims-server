@@ -1,6 +1,5 @@
 const Joi = require("joi");
 
-// Validate registration data
 exports.validateRegistration = (req, res, next) => {
   const schema = Joi.object({
     username: Joi.string().min(3).max(50).required(),
@@ -21,7 +20,6 @@ exports.validateRegistration = (req, res, next) => {
   next();
 };
 
-// Validate login data
 exports.validateLogin = (req, res, next) => {
   const schema = Joi.object({
     username: Joi.string().required(),
@@ -40,7 +38,6 @@ exports.validateLogin = (req, res, next) => {
   next();
 };
 
-// Validate user update data
 exports.validateUserUpdate = (req, res, next) => {
   const schema = Joi.object({
     username: Joi.string().min(3).max(50),
@@ -48,7 +45,7 @@ exports.validateUserUpdate = (req, res, next) => {
     password: Joi.string().min(6),
     role: Joi.string().valid("user", "admin"),
     isActive: Joi.boolean(),
-  }).min(1); // At least one field required
+  }).min(1);
 
   const { error } = schema.validate(req.body);
 

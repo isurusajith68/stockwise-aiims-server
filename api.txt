@@ -1,0 +1,70 @@
+export API_URL=http://localhost:8080
+
+# 1. Register a new user
+curl -X POST $API_URL/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "testuser@example.com",
+    "password": "Password123!"
+  }'
+
+# 2. Login with the new user
+curl -X POST $API_URL/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "Password123!"
+  }'
+
+# Store the token from the response
+export TOKEN="your_token_here"
+
+# 3. Get user profile (protected route)
+curl -X GET $API_URL/api/users/profile \
+  -H "Authorization: Bearer $TOKEN"
+
+# 4. Setup 2FA
+curl -X POST $API_URL/api/auth/2fa/setup \
+  -H "Authorization: Bearer $TOKEN"
+
+# Store the secret and qrCode from the response
+export SECRET="your_2fa_secret_here"
+
+# 5. Generate TOTP token using the secret (use an authenticator app or online tool)
+# Then verify 2FA setup
+curl -X POST $API_URL/api/auth/2fa/verify \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "your_generated_totp_token"
+  }'
+
+# 6. Login with 2FA
+curl -X POST $API_URL/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "Password123!",
+    "token": "your_generated_totp_token"
+  }'
+
+# Store the new token
+export TOKEN="your_new_token_here"
+
+# 7. Get login history
+curl -X GET $API_URL/api/auth/login-history \
+  -H "Authorization: Bearer $TOKEN"
+
+# 8. Disable 2FA
+curl -X POST $API_URL/api/auth/2fa/disable \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "password": "Password123!"
+  }'
+
+# 9. Logout
+curl -X POST $API_URL/api/auth/logout \
+  -H "Authorization: Bearer $TOKEN"
+*/

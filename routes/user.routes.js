@@ -1,20 +1,26 @@
-const express = require("express");
-const router = express.Router();
-const userController = require("../controllers/user.controller");
-const { verifyToken, isAdmin } = require("../middleware/auth.jwt");
-const { validateUserUpdate } = require("../middleware/validateData");
+const { authJwt, verifyToken, optionalAuth } = require("../middleware/authJwt");
+const controller = require("../controllers/user.controller");
 
-// Get current user profile
-router.get("/profile", verifyToken, userController.getProfile);
+module.exports = function (app) {
+  // app.use(function (req, res, next) {
+  //   res.header(
+  //     "Access-Control-Allow-Headers",
+  //     "Origin, Content-Type, Accept, Authorization"
+  //   );
+  //   next();
+  // });
 
-// Admin-only routes
-router.get("/", [verifyToken, isAdmin], userController.findAll);
-router.get("/:id", [verifyToken, isAdmin], userController.findOne);
-router.put(
-  "/:id",
-  [verifyToken, isAdmin, validateUserUpdate],
-  userController.update
-);
-router.delete("/:id", [verifyToken, isAdmin], userController.delete);
+  // // app.get("/api/users/public", controller.publicAccess);
 
-module.exports = router;
+  // app.get(
+  //   "/api/users/profile",
+  //   [authJwt.verifyActiveUser],
+  //   controller.userProfile
+  // );
+
+  // app.get("/api/users/admin", [verifyToken], controller.adminAccess);
+
+  // app.get("/api/users/content", [optionalAuth], controller.getContent);
+
+  // app.post("/api/auth/logout", [verifyToken], controller.logout);
+};
