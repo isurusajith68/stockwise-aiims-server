@@ -71,6 +71,8 @@ module.exports = (app) => {
     controller.refreshToken
   );
 
+  
+
   app.post("/api/auth/logout", authJwt.verifyToken, controller.logout);
 
   // Password reset request

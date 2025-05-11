@@ -16,6 +16,14 @@ module.exports = (sequelize, Sequelize) => {
           len: [3, 50],
         },
       },
+      companyName: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: true,
+          len: [3, 100],
+        },
+      },
       email: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -24,13 +32,21 @@ module.exports = (sequelize, Sequelize) => {
           isEmail: true,
         },
       },
+      phone: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: true,
+          len: [10, 15],
+        },
+      },
       password: {
         type: Sequelize.STRING,
         allowNull: false,
       },
       role: {
         type: Sequelize.ENUM("user", "admin"),
-        defaultValue: "user",
+        defaultValue: "admin",
       },
       isActive: {
         type: Sequelize.BOOLEAN,

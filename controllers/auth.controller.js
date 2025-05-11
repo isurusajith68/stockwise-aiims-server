@@ -189,6 +189,8 @@ exports.register = async (req, res, next) => {
         username: req.body.username,
         email: req.body.email.toLowerCase(),
         password: bcrypt.hashSync(req.body.password, 10),
+        companyName: req.body.companyName,
+        phone: req.body.phone,
         role: req.body.role && req.body.role === "admin" ? "admin" : "user",
         isActive: true,
         lastLogin: new Date(),
