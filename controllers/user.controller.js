@@ -76,6 +76,8 @@ exports.getProfile = async (req, res, next) => {
         "id",
         "username",
         "email",
+        "companyName",
+        "phone",
         "role",
         "isActive",
         "createdAt",
