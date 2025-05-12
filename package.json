@@ -21,12 +21,12 @@
     "joi": "^17.9.2",
     "jsonwebtoken": "^9.0.0",
     "morgan": "^1.10.0",
-    "pg": "^8.11.0",
+    "pg": "^8.x",
     "pg-hstore": "^2.3.4",
     "qrcode": "^1.5.4",
     "rate-limit-redis": "^4.2.0",
     "redis": "^5.0.1",
-    "sequelize": "^6.31.1",
+    "sequelize": "^6.x",
     "speakeasy": "^2.0.0"
   },
   "devDependencies": {
