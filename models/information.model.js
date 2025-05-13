@@ -21,11 +21,11 @@ module.exports = (sequelize, Sequelize) => {
       },
       storePhone: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       storeAddress: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       createdAt: {
         type: Sequelize.DATE,

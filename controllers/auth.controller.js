@@ -204,9 +204,7 @@ exports.register = async (req, res, next) => {
     await informationModel.create(
       {
         userId: user.id,
-        storeName: req.body.storeName,
-        storePhone: req.body.storePhone,
-        storeAddress: req.body.storeAddress,
+        storeName: req.body.companyName,
       },
       { transaction: t }
     );
