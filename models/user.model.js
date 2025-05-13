@@ -16,14 +16,6 @@ module.exports = (sequelize, Sequelize) => {
           len: [3, 50],
         },
       },
-      companyName: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        validate: {
-          notEmpty: true,
-          len: [3, 100],
-        },
-      },
       email: {
         type: Sequelize.STRING,
         allowNull: false,
