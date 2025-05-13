@@ -7,6 +7,7 @@ const TwoFactorAuth = db.twoFactorAuth;
 const TokenBlacklist = db.tokenBlacklist;
 const speakeasy = require("speakeasy");
 const { Op } = require("sequelize");
+const informationModel = require("../models/information.model");
 const sequelize = db.sequelize;
 
 exports.login = async (req, res, next) => {
@@ -189,7 +190,6 @@ exports.register = async (req, res, next) => {
         username: req.body.username,
         email: req.body.email.toLowerCase(),
         password: bcrypt.hashSync(req.body.password, 10),
-        companyName: req.body.companyName,
         phone: req.body.phone,
         role: req.body.role && req.body.role === "admin" ? "admin" : "user",
         isActive: true,
@@ -197,6 +197,16 @@ exports.register = async (req, res, next) => {
         loginDevice: userDevice,
         loginLocation: userLocation,
         loginIp: userIp,
+      },
+      { transaction: t }
+    );
+
+    await informationModel.create(
+      {
+        userId: user.id,
+        storeName: req.body.storeName,
+        storePhone: req.body.storePhone,
+        storeAddress: req.body.storeAddress,
       },
       { transaction: t }
     );
