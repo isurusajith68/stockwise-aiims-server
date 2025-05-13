@@ -23,6 +23,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      storeEmail: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       storeAddress: {
         type: Sequelize.STRING,
         allowNull: true,

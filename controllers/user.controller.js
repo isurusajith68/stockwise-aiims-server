@@ -87,7 +87,14 @@ exports.getProfile = async (req, res, next) => {
         {
           model: Information,
           as: "storeInformation",
-          attributes: ["storeName", "storePhone", "storeAddress"],
+          attributes: [
+            "id",
+            "storeName",
+            "storePhone",
+            "storeAddress",
+            "createdAt",
+            "updatedAt",
+          ],
         },
       ],
     });
