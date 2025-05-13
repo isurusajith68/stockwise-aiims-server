@@ -19,7 +19,6 @@ exports.login = async (req, res, next) => {
         [Op.or]: [{ username: identifier }, { email: identifier }], // Match either username or email
       },
     });
-    console.log("User found:", user ? user.id : "not found");
 
     const loginAttempt = {
       userId: user ? user.id : null,
@@ -33,7 +32,7 @@ exports.login = async (req, res, next) => {
 
     if (!user) {
       loginAttempt.failureReason = "User not found";
-      await LoginHistory.create(loginAttempt);
+      // await LoginHistory.create(loginAttempt);
 
       return res.status(404).json({
         status: "fail",
