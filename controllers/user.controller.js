@@ -1,5 +1,6 @@
 const db = require("../models");
 const User = db.user;
+const Information = db.information;
 const bcrypt = require("bcryptjs");
 
 exports.findAll = async (req, res, next) => {
@@ -76,12 +77,18 @@ exports.getProfile = async (req, res, next) => {
         "id",
         "username",
         "email",
-        "companyName",
         "phone",
         "role",
         "isActive",
         "createdAt",
         "lastLogin",
+      ],
+      include: [
+        {
+          model: Information,
+          as: "storeInformation",
+          attributes: ["storeName", "storePhone", "storeAddress"],
+        },
       ],
     });
 

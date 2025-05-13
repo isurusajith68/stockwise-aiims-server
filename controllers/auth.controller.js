@@ -7,7 +7,7 @@ const TwoFactorAuth = db.twoFactorAuth;
 const TokenBlacklist = db.tokenBlacklist;
 const speakeasy = require("speakeasy");
 const { Op } = require("sequelize");
-const informationModel = require("../models/information.model");
+const informationModel = db.information;
 const sequelize = db.sequelize;
 
 exports.login = async (req, res, next) => {

@@ -33,7 +33,12 @@ db.user.hasMany(db.tokenBlacklist, { foreignKey: "userId" });
 db.tokenBlacklist.belongsTo(db.user, { foreignKey: "userId" });
 
 db.information = require("./information.model.js")(sequelize, Sequelize);
-db.user.hasMany(db.information, { foreignKey: "userId" });
-db.information.belongsTo(db.user, { foreignKey: "userId" });
-
+db.user.hasMany(db.information, {
+  foreignKey: "userId",
+  as: "storeInformation",
+});
+db.information.belongsTo(db.user, {
+  foreignKey: "userId",
+  as: "user",
+});
 module.exports = db;

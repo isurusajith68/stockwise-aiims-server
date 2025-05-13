@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-  const TokenBlacklist = sequelize.define("tokenBlacklist", {
+  const TokenBlacklist = sequelize.define("token_blacklist", {
     id: {
       type: Sequelize.UUID,
       defaultValue: Sequelize.UUIDV4,

@@ -1,6 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
   const Information = sequelize.define(
-    "store-information",
+    "store_information",
     {
       id: {
         type: Sequelize.UUID,
