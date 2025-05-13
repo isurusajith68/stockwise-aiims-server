@@ -252,7 +252,7 @@ exports.getLoginHistory = async (req, res, next) => {
     const loginHistory = await LoginHistory.findAll({
       where: { userId },
       order: [["loginTime", "DESC"]],
-      limit: 10, // Get last 10 logins
+      limit: 10,
     });
 
     return res.status(200).json({
@@ -269,20 +269,17 @@ exports.refreshToken = async (req, res, next) => {
     const userId = req.userId;
     const userRole = req.userRole;
 
-    // Generate new token
     const newToken = jwt.sign(
       { id: userId, role: userRole },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
-    // Add the old token to blacklist with proper expiration
     if (req.token) {
       const decoded = jwt.decode(req.token);
       if (decoded && decoded.exp) {
         const expiresAt = new Date(decoded.exp * 1000);
 
-        // Check if token already in blacklist to avoid unique constraint errors
         const existingToken = await TokenBlacklist.findOne({
           where: { token: req.token },
         });

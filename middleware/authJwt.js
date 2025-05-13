@@ -5,7 +5,6 @@ const TokenBlacklist = db.tokenBlacklist;
 
 const authJwt = {};
 
-// Helper function to extract token from header
 authJwt.extractToken = (authHeader) => {
   if (!authHeader) return null;
 
@@ -28,7 +27,6 @@ authJwt.verifyToken = async (req, res, next) => {
 
     const token = authJwt.extractToken(authHeader);
 
-    // Check if token is blacklisted
     const blacklistedToken = await TokenBlacklist.findOne({
       where: { token },
     });
@@ -40,7 +38,6 @@ authJwt.verifyToken = async (req, res, next) => {
       });
     }
 
-    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.userId = decoded.id;
@@ -111,7 +108,6 @@ authJwt.refreshToken = async (req, res, next) => {
 
     const token = authJwt.extractToken(authHeader);
 
-    // Check if token is blacklisted
     const blacklistedToken = await TokenBlacklist.findOne({
       where: { token },
     });
@@ -131,13 +127,10 @@ authJwt.refreshToken = async (req, res, next) => {
 
     const now = Math.floor(Date.now() / 1000);
 
-    // If token will expire in less than an hour (3600 seconds)
     if (decoded.exp - now < 3600) {
       try {
-        // Verify token is still valid
         jwt.verify(token, process.env.JWT_SECRET);
 
-        // Generate new token
         const newToken = jwt.sign(
           { id: decoded.id, role: decoded.role },
           process.env.JWT_SECRET,
@@ -167,7 +160,6 @@ authJwt.optionalAuth = async (req, res, next) => {
 
     const token = authJwt.extractToken(authHeader);
 
-    // Check if token is blacklisted
     const blacklistedToken = await TokenBlacklist.findOne({
       where: { token },
     });
