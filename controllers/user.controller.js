@@ -91,6 +91,7 @@ exports.getProfile = async (req, res, next) => {
             "id",
             "storeName",
             "storePhone",
+            "storeEmail",
             "storeAddress",
             "createdAt",
             "updatedAt",
@@ -118,8 +119,7 @@ exports.getProfile = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
-
+    const user = await User.findByPk(req.userId);
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -128,6 +128,35 @@ exports.update = async (req, res, next) => {
     }
 
     const updateData = {};
+    const updateStoreData = {};
+
+    console.log("req.body", req.body);
+
+    if (req.body.storeInformation?.storeName)
+      updateStoreData.storeName = req.body.storeInformation.storeName;
+    if (req.body.storeInformation?.storePhone)
+      updateStoreData.storePhone = req.body.storeInformation.storePhone;
+    if (req.body.storeInformation?.storeAddress)
+      updateStoreData.storeAddress = req.body.storeInformation.storeAddress;
+    if (req.body.storeInformation?.storeEmail)
+      updateStoreData.storeEmail = req.body.storeInformation.storeEmail;
+
+      if (req.body.storeInformation?.storeId) {
+        const storeInformation = await Information.findByPk(
+          req.body.storeInformation.storeId
+        );
+
+        console.log("storeInformation", storeInformation);
+
+        if (!storeInformation) {
+          return res.status(404).json({
+            status: "error",
+            message: "Store information not found",
+          });
+        }
+
+        await storeInformation.update(updateStoreData);
+      }
 
     if (req.body.username) updateData.username = req.body.username;
     if (req.body.email) updateData.email = req.body.email;
@@ -151,6 +180,7 @@ exports.update = async (req, res, next) => {
       },
     });
   } catch (error) {
+    console.error("Update error", error);
     next(error);
   }
 };

@@ -11,4 +11,9 @@ module.exports = function (app) {
   });
 
   app.get("/api/users/profile", [verifyActiveUser], controller.getProfile);
+  app.put(
+    "/api/users/profile",
+    [verifyActiveUser],
+    controller.update
+  );
 };
