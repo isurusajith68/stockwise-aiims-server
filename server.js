@@ -8,6 +8,7 @@ const { errorHandler } = require("./utils/errorHandler");
 
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
+const productRoutes = require("./routes/product.routes");
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.get("/", (req, res) => {
 
 require("./routes/auth.routes")(app);
 require("./routes/user.routes")(app);
+require("./routes/product.routes")(app);
 
 app.use((req, res, next) => {
   res.status(404).json({

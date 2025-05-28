@@ -41,4 +41,16 @@ db.information.belongsTo(db.user, {
   foreignKey: "userId",
   as: "user",
 });
+
+// Product model
+db.product = require("./product.model.js")(sequelize, Sequelize);
+db.user.hasMany(db.product, {
+  foreignKey: "userId",
+  as: "products",
+});
+db.product.belongsTo(db.user, {
+  foreignKey: "userId",
+  as: "owner",
+});
+
 module.exports = db;
