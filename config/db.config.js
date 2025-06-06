@@ -1,5 +1,7 @@
 require("dotenv").config();
 
+const useSSL = process.env.DB_SSL === "true";
+
 module.exports = {
   HOST: process.env.DB_HOST,
   PORT: process.env.DB_PORT,
@@ -7,6 +9,14 @@ module.exports = {
   PASSWORD: process.env.DB_PASSWORD,
   DB: process.env.DB_NAME,
   dialect: "postgres",
+  dialectOptions: useSSL
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
   pool: {
     max: 5, // maximum number of connections in pool
     min: 0, // minimum number of connections in pool
