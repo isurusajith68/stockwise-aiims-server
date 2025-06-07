@@ -28,12 +28,25 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       unique: true,
     },
+    initialStock: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     imageUrl: {
       type: Sequelize.STRING,
     },
     isActive: {
       type: Sequelize.BOOLEAN,
       defaultValue: true,
+    },
+    userId: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
   });
 
